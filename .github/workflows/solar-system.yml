@@ -8,7 +8,7 @@ on:
       - "feature/*"
 
 env:
-  MONGO_URI: mongodb+srv://${{vars.MONGO_USER}}:${{secrets.MONGO_PASSWORD}}@cluster0.jv3yw.mongodb.net/solar?retryWrites=true&w=majority&appName=Cluster0
+  MONGO_URI: mongodb+srv://${{vars.MONGO_USER}}:${{secrets.MONGO_PASSWORD}}@cluster0.jv3yw.mongodb.net/sample_mfix
 
 jobs:
   unit-testing:
