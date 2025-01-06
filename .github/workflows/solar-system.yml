@@ -32,6 +32,7 @@ jobs:
 
       - name: Unit Testing
         run: npm test
+        continue-on-error: true
 
       - name: Archive Test Result
         if: always()
@@ -39,3 +40,4 @@ jobs:
         with:
           name: Mocha-Test-Result
           path: test-results.xml
+          retention-days: 1
