@@ -97,3 +97,20 @@ jobs:
         with:
           username: ${{vars.DOCKER_USERNAME}}
           password: ${{secrets.DOCKER_PASSWORD}}
+
+      - name: Docker Build and Push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: false
+          tags: ${{vars.DOCKER_USERNAME}}/solar-system:${{github.sha}}
+
+      - name: Docker Image Testing
+        run: |
+          docker run --name solar-sys-container -d \
+            -p 3000:3000 \
+            -e MONGO_URI=${{env.MONGO_URI}} \
+            ${{vars.DOCKER_USERNAME}}/solar-system:${{github.sha}} \
+
+          echo Testing server with wget
+          wget -q -O - 127.0.0.1:3000/live | grep live
