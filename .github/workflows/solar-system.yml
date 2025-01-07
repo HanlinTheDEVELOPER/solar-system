@@ -8,7 +8,7 @@ on:
       - "feature/*"
 
 env:
-  MONGO_URI: mongodb+srv://${{vars.MONGO_USER}}:${{secrets.MONGO_PASSWORD}}@cluster0.jv3yw.mongodb.net/sample_mfix
+  MONGO_URI: mongodb+srv://${{vars.MONGO_USER}}:${{secrets.MONGO_PASSWORD}}@supercluster.d83jj.mongodb.net/superData
 
 jobs:
   unit-testing:
@@ -32,7 +32,6 @@ jobs:
 
       - name: Unit Testing
         run: npm test
-        continue-on-error: true
 
       - name: Archive Test Result
         if: always()
