@@ -2,6 +2,11 @@ name: Solar System Workflow
 
 on:
   workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to test"
+        required: true
+        default: "main"
   push:
     branches:
       - main
