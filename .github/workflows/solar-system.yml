@@ -2,11 +2,6 @@ name: Solar System Workflow
 
 on:
   workflow_dispatch:
-    # inputs:
-    #   branch:
-    #     description: "Branch to test"
-    #     required: true
-    #     default: "main"
   push:
     branches:
       - main
@@ -114,3 +109,11 @@ jobs:
 
           echo Testing server with wget
           wget -q -O - 127.0.0.1:3000/live | grep live
+
+      - name: Docker Image Push
+        if: github.ref == 'refs/heads/main'
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{vars.DOCKER_USERNAME}}/solar-system:${{github.sha}}
