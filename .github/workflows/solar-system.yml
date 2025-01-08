@@ -153,8 +153,6 @@ jobs:
 
       - name: Install Kubectl
         uses: azure/setup-kubectl@v3
-        with:
-          version: 1.26.0
 
       - name: Check Kubectl
         run: |
