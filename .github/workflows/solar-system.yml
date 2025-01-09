@@ -178,3 +178,8 @@ jobs:
           REPLICAS: ${{vars.REPLICAS}}
           IMAGE: ${{vars.DOCKER_USERNAME}}/solar-system:${{github.sha}}
           INGRESS_IP: ${{vars.INGRESS_IP}}
+      - name: Check yaml
+        run: |
+          cat kubernetes/development/deployment.yaml
+          cat kubernetes/development/service.yaml
+          cat kubernetes/development/ingress.yaml
