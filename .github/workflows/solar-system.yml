@@ -166,3 +166,15 @@ jobs:
           echo -------------------
           kubectl get nodes
           echo -------------------
+
+      - name: Replace Placeholder in yaml
+        uses: cschleiden/replace-tokens@v1
+        with:
+          tokenPrefix: "_{_"
+          tokenSuffix: "_}"
+          files: "kubernetes/development/*.yaml"
+        env:
+          NAMESPACE: ${{vars.NAMESPACE}}
+          REPLICAS: ${{vars.REPLICAS}}
+          IMAGE: ${{vars.DOCKER_USERNAME}}/solar-system:${{github.sha}}
+          INGRESS_IP: ${{vars.INGRESS_IP}}
