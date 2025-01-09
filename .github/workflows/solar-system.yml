@@ -154,9 +154,15 @@ jobs:
       - name: Install Kubectl
         uses: azure/setup-kubectl@v3
 
+      - name: Kubectl Config
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{secrets.KUBESAILCONFIG}}
+
       - name: Check Kubectl
         run: |
-          kubectl version --short
+          kubectl version
           echo -------------------
           kubectl get nodes
           echo -------------------
