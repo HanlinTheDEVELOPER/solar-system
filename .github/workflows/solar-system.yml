@@ -147,6 +147,8 @@ jobs:
     name: Dev Deployment
     needs: [docker]
     runs-on: ubuntu-latest
+    outputs:
+      deployed-url: ${{ steps.set-app-ingress-address.outputs.APP_INGRESS_ADDRESS }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -167,6 +169,10 @@ jobs:
           kubectl get nodes
           echo -------------------
 
+      - name: Set Ingress Ip as GitHub Env Variable
+        run: |
+          echo "INGRESS_IP=$(kubectl -n ingress-nginx get services ingress-nginx-controller  -o jsonpath='{.status.loadBalancer.ingress[0].ip}'))" >> $GITHUB_ENV
+
       - name: Replace Placeholder in yaml
         uses: cschleiden/replace-tokens@v1
         with:
@@ -177,7 +183,7 @@ jobs:
           NAMESPACE: ${{vars.NAMESPACE}}
           REPLICAS: ${{vars.REPLICAS}}
           IMAGE: ${{vars.DOCKER_USERNAME}}/solar-system:${{github.sha}}
-          INGRESS_IP: ${{vars.INGRESS_IP}}
+          INGRESS_IP: ${{env.INGRESS_IP}}
       - name: Check yaml
         run: |
           cat kubernetes/development/deployment.yaml
@@ -189,3 +195,7 @@ jobs:
       - name: Deploy
         run: |
           kubectl apply -f kubernetes/development
+      - name: Set App Ingress Address
+        id: set-app-ingress-address
+        run: |
+          echo APP_INGRESS_ADDRESS=$(kubectl get ingress -n ${{vars.NAMESPACE}} -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}')
