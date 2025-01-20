@@ -169,9 +169,9 @@ jobs:
           kubectl get nodes
           echo -------------------
 
-      - name: Set Ingress Ip as GitHub Env Variable
-        run: |
-          echo "INGRESS_IP=$(kubectl -n ingress-nginx get services ingress-nginx-controller  -o jsonpath='{.status.loadBalancer.ingress[0].ip}')" >> $GITHUB_ENV
+      # - name: Set Ingress Ip as GitHub Env Variable
+      #   run: |
+      #     echo "INGRESS_IP=$(kubectl -n ingress-nginx get services ingress-nginx-controller  -o jsonpath='{.status.loadBalancer.ingress[0].ip}')" >> $GITHUB_ENV
 
       - name: Replace Placeholder in yaml
         uses: cschleiden/replace-tokens@v1
@@ -183,7 +183,7 @@ jobs:
           NAMESPACE: ${{vars.NAMESPACE}}
           REPLICAS: ${{vars.REPLICAS}}
           IMAGE: ${{vars.DOCKER_USERNAME}}/solar-system:${{github.sha}}
-          INGRESS_IP: ${{env.INGRESS_IP}}
+          INGRESS_IP: ${{vars.INGRESS_IP}}
       - name: Check yaml
         run: |
           cat kubernetes/development/deployment.yaml
