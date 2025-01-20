@@ -13,11 +13,17 @@ env:
 jobs:
   unit-testing:
     name: Unit Testing
+    services:
+      mongodb:
+        image: siddharth67/mongo-db:non-prod
+        ports:
+          - 27017:27017
     strategy:
       matrix:
         os: [ubuntu-latest]
         node-version: [20]
-
+    env:
+      MONGO_URI: mongodb://non-prod-user:non-prod-password@localhost:27017/superData
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout Repository
@@ -42,7 +48,7 @@ jobs:
 
       - name: Archive Test Result
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Mocha-Test-Result
           path: test-results.xml
@@ -50,15 +56,23 @@ jobs:
 
   code-coverage:
     name: Code Coverage
+    container:
+      image: node:18-alpine
+    services:
+      mongodb:
+        image: siddharth67/mongo-db:non-prod
+        options: --name mongo
+    env:
+      MONGO_URI: mongodb://non-prod-user:non-prod-password@localhost:27017/superData
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup NodeJS Version 18
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
+      # - name: Setup NodeJS Version 18
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: 18
 
       - name: Caching Node Modules
         uses: actions/cache@v3
@@ -79,8 +93,11 @@ jobs:
           name: Code-Coverage-Result
           path: coverage
           retention-days: 1
+
   docker:
     name: Containerization
+    permissions:
+      packages: write
     runs-on: ubuntu-latest
     needs: [unit-testing, code-coverage]
     steps:
@@ -92,6 +109,13 @@ jobs:
         with:
           username: ${{vars.DOCKER_USERNAME}}
           password: ${{secrets.DOCKER_PASSWORD}}
+
+      - name: GHCR Login
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{github.repository_owner}}
+          password: ${{secrets.GITHUB_TOKEN}}
 
       - name: Docker Build and Push
         uses: docker/build-push-action@v4
@@ -111,9 +135,51 @@ jobs:
           wget -q -O - 127.0.0.1:3000/live | grep live
 
       - name: Docker Image Push
-        if: github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
-          tags: ${{vars.DOCKER_USERNAME}}/solar-system:${{github.sha}}
+          tags: |
+            ${{vars.DOCKER_USERNAME}}/solar-system:${{github.sha}}
+            ghcr.io/${{github.repository_owner}}/solar-system:${{github.sha}}
+
+  dev-deploy:
+    name: Dev Deployment
+    needs: [docker]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Kubectl Config
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{secrets.KUBESAILCONFIG}}
+
+      - name: Check Kubectl
+        run: |
+          kubectl version
+          echo -------------------
+          kubectl get nodes
+          echo -------------------
+
+      - name: Replace Placeholder in yaml
+        uses: cschleiden/replace-tokens@v1
+        with:
+          tokenPrefix: "_{_"
+          tokenSuffix: "_}_"
+          files: "kubernetes/development/*.yaml"
+        env:
+          NAMESPACE: ${{vars.NAMESPACE}}
+          REPLICAS: ${{vars.REPLICAS}}
+          IMAGE: ${{vars.DOCKER_USERNAME}}/solar-system:${{github.sha}}
+          INGRESS_IP: ${{vars.INGRESS_IP}}
+      - name: Check yaml
+        run: |
+          cat kubernetes/development/deployment.yaml
+          cat kubernetes/development/service.yaml
+          cat kubernetes/development/ingress.yaml
