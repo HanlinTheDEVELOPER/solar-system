@@ -183,7 +183,7 @@ jobs:
           cat kubernetes/development/deployment.yaml
       - name: Create NameSpace Secrect
         run: |
-          kubectl create namespace ${{vars.NAMESPACE}}
+          kubectl create namespace ${{vars.NAMESPACE}} \
           kubectl create secret generic mongo-db-creds \
           --from-literal=MONGO_URI=${{env.MONGO_URI}} -n ${{vars.NAMESPACE}} \
           dry-run=client -o yaml | kubectl apply -f -
