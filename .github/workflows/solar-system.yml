@@ -63,7 +63,7 @@ jobs:
         image: siddharth67/mongo-db:non-prod
         options: --name mongo
     env:
-      MONGO_URI: mongodb://non-prod-user:non-prod-password@localhost:27017/superData
+      MONGO_URI: mongodb://non-prod-user:non-prod-password@mongodb:27017/superData
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -144,42 +144,41 @@ jobs:
             ghcr.io/${{github.repository_owner}}/solar-system:${{github.sha}}
 
   dev-deploy:
-    name: Dev Deployment
+    if: contains(github.ref, 'features/')
     needs: [docker]
+    uses: ./.github/workflows/reuse-deployment.yml
+    secrets:
+      kubesailconfig: ${{secrets.KUBESAILCONFIG}}
+    with:
+      mongo-uri: ${{vars.MONGO_URI}}
+      deploy-env: development
+      k8s-manifest-path: kubernetes/development
+
+  prod-deploy:
+    if: contains(github.ref, 'main')
+    needs: [docker]
+    uses: ./.github/workflows/reuse-deployment.yml
+    secrets:
+      kubesailconfig: ${{secrets.KUBESAILCONFIG}}
+    with:
+      mongo-uri: ${{vars.MONGO_URI}}
+      deploy-env: production
+      k8s-manifest-path: kubernetes/production
+
+  slack-notification:
+    if: always()
+    needs: [dev-deploy, prod-deploy]
+    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
-      - name: Install Kubectl
-        uses: azure/setup-kubectl@v3
-
-      - name: Kubectl Config
-        uses: azure/k8s-set-context@v3
-        with:
-          method: kubeconfig
-          kubeconfig: ${{secrets.KUBESAILCONFIG}}
-
-      - name: Check Kubectl
-        run: |
-          kubectl version
-          echo -------------------
-          kubectl get nodes
-          echo -------------------
-
-      - name: Replace Placeholder in yaml
-        uses: cschleiden/replace-tokens@v1
-        with:
-          tokenPrefix: "_{_"
-          tokenSuffix: "_}_"
-          files: "kubernetes/development/*.yaml"
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
         env:
-          NAMESPACE: ${{vars.NAMESPACE}}
-          REPLICAS: ${{vars.REPLICAS}}
-          IMAGE: ${{vars.DOCKER_USERNAME}}/solar-system:${{github.sha}}
-          INGRESS_IP: ${{vars.INGRESS_IP}}
-      - name: Check yaml
-        run: |
-          cat kubernetes/development/deployment.yaml
-          cat kubernetes/development/service.yaml
-          cat kubernetes/development/ingress.yaml
+          SLACK_WEBHOOK: ${{secrets.SLACK_WEBHOOK}}
+          SLACK_MESSAGE: ":rocket: Deployed to ${{ needs.dev-deploy.outputs.deployed-to }} environment"
+          SLACK_CHANNEL: github-actions-noti
+          SLACK_COLOR: ${{job.status}}
+          SLACK_ICON: https://raw.githubusercontent.com/hanlinthedev/solar-system/refs/heads/main/images/earth.png
+          SLACK_TITLE: Info
