@@ -180,5 +180,5 @@ jobs:
           SLACK_MESSAGE: ":rocket: Deployed to ${{ needs.dev-deploy.outputs.deployed-to }} environment"
           SLACK_CHANNEL: github-actions-noti
           SLACK_COLOR: ${{job.status}}
-          SLACK_ICON: "https://raw.githubusercontent.com/hanlinthedev/solar-system/refs/heads/main/images/earth.png"
+          SLACK_ICON: https://raw.githubusercontent.com/hanlinthedev/solar-system/refs/heads/main/images/earth.png
           SLACK_TITLE: Info
