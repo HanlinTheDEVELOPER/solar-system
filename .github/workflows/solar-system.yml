@@ -164,3 +164,21 @@ jobs:
       mongo-uri: ${{vars.MONGO_URI}}
       deploy-env: production
       k8s-manifest-path: kubernetes/production
+
+  slack-notification:
+    if: always()
+    needs: [dev-deploy, prod-deploy]
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOD: ${{secrets.SLACK_WEBHOOK}}
+          SLACK_MESSAGE: ":rocket: Deployed to ${{ github.env }} environment"
+          SLACK_CHANNEL: github-actions-noti
+          SLACK_COLOR: ${{job.status}}
+          SLACK_ICON: https://github.com/hanlinthedev/solar-system/~/raw/main/images/solar-system.png
+          SLACK_TITLE: Info
