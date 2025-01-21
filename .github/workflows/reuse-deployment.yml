@@ -14,6 +14,9 @@ on:
     secrets:
       kubesailconfig:
         required: true
+    outputs:
+      deployed-url:
+        value: ${{jobs.reuse-deployment.outputs.deployed-url}}
 
 jobs:
   reuse-deployment:
