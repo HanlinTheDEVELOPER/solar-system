@@ -144,58 +144,11 @@ jobs:
             ghcr.io/${{github.repository_owner}}/solar-system:${{github.sha}}
 
   dev-deploy:
-    name: Dev Deployment
+    if: contains(github.ref, 'features/')
     needs: [docker]
-    runs-on: ubuntu-latest
-    outputs:
-      deployed-url: ${{ steps.set-app-ingress-address.outputs.APP_INGRESS_ADDRESS }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+    uses: ./.github/workflows/reuse-deployment.yml
 
-      - name: Install Kubectl
-        uses: azure/setup-kubectl@v3
-
-      - name: Kubectl Config
-        uses: azure/k8s-set-context@v3
-        with:
-          method: kubeconfig
-          kubeconfig: ${{secrets.KUBESAILCONFIG}}
-
-      - name: Check Kubectl
-        run: |
-          kubectl version
-          echo -------------------
-          kubectl get nodes
-          echo -------------------
-
-      # - name: Set Ingress Ip as GitHub Env Variable
-      #   run: |
-      #     echo "INGRESS_IP=$(kubectl -n ingress-nginx get services ingress-nginx-controller  -o jsonpath='{.status.loadBalancer.ingress[0].ip}')" >> $GITHUB_ENV
-
-      - name: Replace Placeholder in yaml
-        uses: cschleiden/replace-tokens@v1
-        with:
-          tokenPrefix: "_{_"
-          tokenSuffix: "_}_"
-          files: "kubernetes/development/*.yaml"
-        env:
-          NAMESPACE: ${{vars.NAMESPACE}}
-          REPLICAS: ${{vars.REPLICAS}}
-          IMAGE: ${{vars.DOCKER_USERNAME}}/solar-system:${{github.sha}}
-          INGRESS_IP: ${{vars.INGRESS_IP}}
-      - name: Check yaml
-        run: |
-          cat kubernetes/development/deployment.yaml
-      - name: Create NameSpace Secrect
-        run: |
-          kubectl create secret generic mongo-db-creds \
-          --from-literal=MONGO_URI=${{env.MONGO_URI}} -n ${{vars.NAMESPACE}} \
-          --dry-run=client -o yaml | kubectl apply -f -
-      - name: Deploy
-        run: |
-          kubectl apply -f kubernetes/development
-      - name: Set App Ingress Address
-        id: set-app-ingress-address
-        run: |
-          echo APP_INGRESS_ADDRESS=$(kubectl get ingress -n ${{vars.NAMESPACE}} -o jsonpath='{.items[0].status.loadBalancer.ingress[0].ip}')
+  prod-deploy:
+    if: contains(github.ref, 'main')
+    needs: [docker]
+    uses: ./.github/workflows/reuse-deployment.yml
