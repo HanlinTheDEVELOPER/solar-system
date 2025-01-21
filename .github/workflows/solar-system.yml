@@ -176,7 +176,7 @@ jobs:
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
         env:
-          SLACK_WEBHOOD: ${{secrets.SLACK_WEBHOOK}}
+          SLACK_WEBHOOK: ${{secrets.SLACK_WEBHOOK}}
           SLACK_MESSAGE: ":rocket: Deployed to ${{ github.env }} environment"
           SLACK_CHANNEL: github-actions-noti
           SLACK_COLOR: ${{job.status}}
