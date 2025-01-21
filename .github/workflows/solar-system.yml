@@ -63,7 +63,7 @@ jobs:
         image: siddharth67/mongo-db:non-prod
         options: --name mongo
     env:
-      MONGO_URI: mongodb://non-prod-user:non-prod-password@localhost:27017/superData
+      MONGO_URI: mongodb://non-prod-user:non-prod-password@mongodb:27017/superData
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
