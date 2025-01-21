@@ -151,7 +151,7 @@ jobs:
       kubesailconfig: ${{secrets.KUBESAILCONFIG}}
     with:
       mongo-uri: ${{vars.MONGO_URI}}
-      deploy-env: developpment
+      deploy-env: development
       k8s-manifest-path: kubernetes/development
 
   prod-deploy:
