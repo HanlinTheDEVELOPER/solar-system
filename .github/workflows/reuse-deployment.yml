@@ -17,6 +17,8 @@ on:
     outputs:
       deployed-url:
         value: ${{jobs.reuse-deployment.outputs.deployed-url}}
+      deployed-to:
+        value: ${{jobs.reuse-deployment.outputs.deployed-to}}
 
 jobs:
   reuse-deployment:
@@ -26,6 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       deployed-url: ${{ steps.set-app-ingress-address.outputs.APP_INGRESS_ADDRESS }}
+      deployed-to: ${{ inputs.deploy-env }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
