@@ -147,8 +147,20 @@ jobs:
     if: contains(github.ref, 'features/')
     needs: [docker]
     uses: ./.github/workflows/reuse-deployment.yml
+    secrets:
+      kubesailconfig: ${{secrets.KUBESAILCONFIG}}
+    with:
+      mongo-uri: ${{vars.MONGO_URI}}
+      deploy-env: developpment
+      k8s-manifest-path: kubernetes/development
 
   prod-deploy:
     if: contains(github.ref, 'main')
     needs: [docker]
     uses: ./.github/workflows/reuse-deployment.yml
+    secrets:
+      kubesailconfig: ${{secrets.KUBESAILCONFIG}}
+    with:
+      mongo-uri: ${{vars.MONGO_URI}}
+      deploy-env: production
+      k8s-manifest-path: kubernetes/production

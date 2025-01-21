@@ -1,11 +1,24 @@
 name: Reuse Deployment
 on:
   workflow_call:
+    inputs:
+      mongo-uri:
+        required: true
+        type: string
+      k8s-manifest-path:
+        type: string
+        default: kubernetes
+      deploy-env:
+        required: true
+        type: string
+    secrets:
+      kubesailconfig:
+        required: true
 
 jobs:
   reuse-deployment:
     environment:
-      name: development
+      name: ${{ inputs.deploy-env }}
       url: ${{ steps.set-app-ingress-address.outputs.APP_INGRESS_ADDRESS }}
     runs-on: ubuntu-latest
     outputs:
@@ -21,7 +34,7 @@ jobs:
         uses: azure/k8s-set-context@v3
         with:
           method: kubeconfig
-          kubeconfig: ${{secrets.KUBESAILCONFIG}}
+          kubeconfig: ${{secrets.kubesailconfig}}
 
       - name: Check Kubectl
         run: |
@@ -39,7 +52,7 @@ jobs:
         with:
           tokenPrefix: "_{_"
           tokenSuffix: "_}_"
-          files: "kubernetes/development/*.yaml"
+          files: "${{inputs.k8s-manifest-path}}/*.yaml"
         env:
           NAMESPACE: ${{vars.NAMESPACE}}
           REPLICAS: ${{vars.REPLICAS}}
@@ -47,15 +60,15 @@ jobs:
           INGRESS_IP: ${{vars.INGRESS_IP}}
       - name: Check yaml
         run: |
-          cat kubernetes/development/deployment.yaml
+          cat ${{inputs.k8s-manifest-path}}/deployment.yaml
       - name: Create NameSpace Secrect
         run: |
           kubectl create secret generic mongo-db-creds \
-          --from-literal=MONGO_URI=${{env.MONGO_URI}} -n ${{vars.NAMESPACE}} \
+          --from-literal=MONGO_URI=${{inputs.mongo-uri}} -n ${{vars.NAMESPACE}} \
           --dry-run=client -o yaml | kubectl apply -f -
       - name: Deploy
         run: |
-          kubectl apply -f kubernetes/development
+          kubectl apply -f ${{inputs.k8s-manifest-path}}
       - name: Set App Ingress Address
         id: set-app-ingress-address
         run: |
